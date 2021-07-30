@@ -2,6 +2,8 @@ import argparse
 import re
 import json
 import sys
+import os
+import requests
 
 
 def file_lines(file_path):
@@ -140,7 +142,24 @@ def input_lines_to_output_lines(input_file_lines,
     return all_lines.rstrip()   # Strip final newline
 
 
+def default_card_json_file_path():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(dir_path, "cardinfo.php.json")
+
+
+def initialize_cards_json_file_path(init_cards_json_file_path):
+    if init_cards_json_file_path is None:
+        if not os.path.isfile(default_card_json_file_path()):
+            response = requests.get("https://db.ygoprodeck.com/api/v7/cardinfo.php")
+            response.raise_for_status()
+            with open(default_card_json_file_path(), "w") as f:
+                f.write(json.dumps(response.json()))
+        return default_card_json_file_path()
+    return init_cards_json_file_path
+
+
 def main(input_file, cards_json_file, format_descriptor_str):
+    cards_json_file = initialize_cards_json_file_path(cards_json_file)
     cards_json = read_json(cards_json_file)
     if input_file is None:
         # Read all possible ids
@@ -157,11 +176,8 @@ def main(input_file, cards_json_file, format_descriptor_str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reformat file containing lines with Yugioh card ids.',
                                      formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("cards_json_file",
-                        help="A json file containing information about all possible Yugioh cards that the script shall support.")
     parser.add_argument("format_descriptor_str",
-                        help=
-                        """A string of letters which describe how each column in the output should be formatted.
+                        help="""A string of letters which describe how each column in the output should be formatted.
 The following descriptors may be entered:
   i (short for id):          The Yugioh card id. NOTE: This descriptor must be used at least once for the format_descriptior_string to be valid.
   n (short for name):        The name of the card.
@@ -172,7 +188,13 @@ The following descriptors may be entered:
   l (short for level):       The level of the card.
   d (short for description): The text box contents of the card.
 """)
+    parser.add_argument("-j", "--cards_json_file",
+                        help="""A json file containing information about all possible Yugioh cards that the script shall support.
+When omitted, attempt to use cardinfo.php.json from the same directory as this file.
+If cardinfo.php.json does not exist, attempt to download an up-to-date file from db.ygoprodeck.com. This requires an internet connection.""")
     parser.add_argument("-f", "--input_file",
-                        help="Input file to process. If ommitted, output all possible cards instead. Each line in the file that shall be processed must contain exactly one Yugioh card ID as a substring.")
+                        help="""Input file to process.
+Each line in the file that shall be processed must contain exactly one Yugioh card ID as a substring.
+When ommitted, output all possible cards instead.""")
     args = parser.parse_args()
     main(args.input_file, args.cards_json_file, args.format_descriptor_str)
