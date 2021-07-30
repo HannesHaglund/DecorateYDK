@@ -53,6 +53,36 @@ class DecorateYdkTests(unittest.TestCase):
                                                           "i")
         self.assertEqual(output, "12345\n6789")
 
+    def test_input_lines_to_output_lines_ignores_fake_ids(self):
+        output = decorate_ydk.input_lines_to_output_lines(["999999999 6789"],
+                                                          example_json(),
+                                                          "i")
+        self.assertEqual(output, "6789")
+
+    def test_input_lines_to_output_lines_finds_names(self):
+        output = decorate_ydk.input_lines_to_output_lines(["Woe is Spongebob!"],
+                                                          example_json(),
+                                                          "i")
+        self.assertEqual(output, "12345")
+
+    def test_input_lines_to_output_lines_finds_names_ignores_case(self):
+        output = decorate_ydk.input_lines_to_output_lines(["SpOnGeBob"],
+                                                          example_json(),
+                                                          "i")
+        self.assertEqual(output, "12345")
+
+    def test_input_lines_to_output_lines_prioritizes_first_name(self):
+        output = decorate_ydk.input_lines_to_output_lines(["Ow Spongebob!"],
+                                                          example_json(),
+                                                          "i")
+        self.assertEqual(output, "6789")
+
+    def test_input_lines_to_output_lines_prioritizes_first_id(self):
+        output = decorate_ydk.input_lines_to_output_lines(["123456789"],
+                                                          example_json(),
+                                                          "i")
+        self.assertEqual(output, "12345")
+
     def test_initialize_cards_json_file_path_input_not_None(self):
         self.assertEqual("foo",
                          decorate_ydk.initialize_cards_json_file_path("foo"))

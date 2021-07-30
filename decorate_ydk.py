@@ -16,24 +16,32 @@ def read_json(file_path):
         return json.load(f)["data"]
 
 
-def numbers_in_string(string):
-    return [int(s) for s in re.findall(r'\d+', string)]
-
-
-def yugioh_id_candidate_in_string(string):
-    nums = numbers_in_string(string)
-    if nums:
-        return max(nums)
-    else:
-        return None
-
-
-def card_from_id(card_id, available_cards):
-    # TODO: This could be sped up by using a dict over a list of cards
-    for card in available_cards:
-        if card["id"] == card_id:
-            return card
+def yugioh_card_in_string(string, cards_json, card_id_regex, card_name_regex):
+    id_match = re.search(card_id_regex, string)
+    if id_match is not None:
+        for card in cards_json:
+            if card["id"] == int(id_match.group(0)):
+                return card
+        assert False, "Should be unreachable"
+    name_match = re.search(card_name_regex, string)
+    if name_match is not None:
+        for card in cards_json:
+            if card["name"].lower() == name_match.group(0).lower():
+                return card
+        assert False, "Should be unreachable"
     return None
+
+
+def yugioh_card_id_regex(cards_json):
+    ids = [str(card["id"]) for card in cards_json]
+    re_str = "(" + "|".join(ids) + ")"
+    return re.compile(re_str)
+
+
+def yugioh_card_name_regex(cards_json):
+    ids = [card["name"] for card in cards_json]
+    re_str = "(" + "|".join(ids) + ")"
+    return re.compile(re_str, re.IGNORECASE)
 
 
 def format_output_card_string(card, format_descriptor_str):
@@ -77,13 +85,17 @@ def format_output_card_string(card, format_descriptor_str):
 def input_lines_to_output_lines_dict(input_file_lines,
                                      cards_json,
                                      format_descriptor_str):
+    # Generate regexes
+    card_id_regex = yugioh_card_id_regex(cards_json)
+    card_name_regex = yugioh_card_name_regex(cards_json)
+
     # First, convert each line to a list of output fields based on card data
     card_lines_to_output_list = dict()
     for line in input_file_lines:
         # Comments and empty lines should be ignored
         if line.startswith("#") or line.startswith("!") or line.strip() == "":
             continue
-        card = card_from_id(yugioh_id_candidate_in_string(line), cards_json)
+        card = yugioh_card_in_string(line, cards_json, card_id_regex, card_name_regex)
         if card is not None:
             output = format_output_card_string(card, format_descriptor_str)
             card_lines_to_output_list[line] = output
