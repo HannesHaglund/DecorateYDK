@@ -42,21 +42,30 @@ def format_output_card_string(card, format_descriptor_str):
     output = []
     for format_char in format_descriptor_str.lower():
         if format_char == "i":
-            output.append(str(card.get("id")))
+            output.append(str(card.get("id", "")))
         elif format_char == "n":
-            output.append(str(card.get("name")))
+            output.append(str(card.get("name", "")))
         elif format_char == "t":
-            output.append(str(card.get("type")))
+            output.append(str(card.get("type", "")))
         elif format_char == "a":
-            output.append(str(card.get("attribute")))
+            output.append(str(card.get("attribute", "")))
         elif format_char == "r":
-            output.append(str(card.get("race")))
+            output.append(str(card.get("race", "")))
         elif format_char == "s":
-            output.append(str(card.get("atk")) + "/" + str(card.get("def")))
+            none_exist = "atk" not in card and "def" not in card
+            if none_exist:
+                output.append("")
+            else:
+                attack = str(card.get("atk", "0"))
+                defense = str(card.get("def", "0"))
+                output.append(attack + "/" + defense)
         elif format_char == "l":
-            output.append("Lv" + str(card.get("level")))
+            if "level" in card:
+                output.append("Lv" + str(card.get("level")))
+            else:
+                output.append("")
         elif format_char == "d":
-            output.append(str(card.get("desc")).replace("\n", " "))
+            output.append(str(card.get("desc", "")).replace("\n", " "))
         else:
             err("Unrecognized format descriptor character \"" +
                 format_char + "\"")
@@ -94,8 +103,17 @@ def input_lines_to_output_lines_dict(input_file_lines,
         card_lines_to_output_string[k] = ""
         for index, field in enumerate(v):
             # +1 so that they are not right next to each other
-            adjusted_field = field.ljust(max_length_per_index[index] + 1)
+            if max_length_per_index[index] == 0:
+                # We do not want to adjust an empty field
+                # This way we avoid them being one char wide rather than 0
+                adjusted_field = ""
+            else:
+                adjusted_field = field.ljust(max_length_per_index[index] + 1)
             card_lines_to_output_string[k] += adjusted_field
+
+    # Strip away the final spaces on each each line, coming from the ljust
+    for k in card_lines_to_output_string:
+        card_lines_to_output_string[k] = card_lines_to_output_string[k].rstrip()
 
     return card_lines_to_output_string
 
@@ -105,15 +123,9 @@ def ignore_codec_errors(string):
     return encoded.decode(sys.stdout.encoding)
 
 
-def main(input_file, cards_json_file, format_descriptor_str):
-    cards_json = read_json(cards_json_file)
-    if input_file is None:
-        # Read all possible ids
-        input_file_lines = []
-        for card in cards_json:
-            input_file_lines.append(str(card["id"]))
-    else:
-        input_file_lines = file_lines(input_file)
+def input_lines_to_output_lines(input_file_lines,
+                                cards_json,
+                                format_descriptor_str):
     d = input_lines_to_output_lines_dict(input_file_lines,
                                          cards_json,
                                          format_descriptor_str)
@@ -125,7 +137,21 @@ def main(input_file, cards_json_file, format_descriptor_str):
             all_lines += ignore_codec_errors(d[line]) + "\n"
         else:
             all_lines += ignore_codec_errors(line) + "\n"
-    print(all_lines)
+    return all_lines.rstrip()   # Strip final newline
+
+
+def main(input_file, cards_json_file, format_descriptor_str):
+    cards_json = read_json(cards_json_file)
+    if input_file is None:
+        # Read all possible ids
+        input_file_lines = []
+        for card in cards_json:
+            input_file_lines.append(str(card["id"]))
+    else:
+        input_file_lines = file_lines(input_file)
+    print(input_lines_to_output_lines(input_file_lines,
+                                      cards_json,
+                                      format_descriptor_str))
 
 
 if __name__ == '__main__':
