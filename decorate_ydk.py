@@ -129,7 +129,7 @@ def main(input_file, cards_json_file, format_descriptor_str):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Reformat file containing lines with yugioh card ids.',
+    parser = argparse.ArgumentParser(description='Reformat file containing lines with Yugioh card ids.',
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("cards_json_file",
                         help="A json file containing information about all possible Yugioh cards that the script shall support.")
