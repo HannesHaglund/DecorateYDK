@@ -1,0 +1,8 @@
+Here are my cards:
+Skull Servant
+Mask of Darkness
+mask of dArKNeSS
+I also want to include ceremonial bell...
+55144522 <- This card allows me to draw two cards from my deck
+If we write two cards on the same line, say Foolish Burial followed by Monster Reborne, the script will pick up the first match only.
+It will prioritize id's over names though: Monster Reborn 81439173 ( <- the id for foolish burial)
