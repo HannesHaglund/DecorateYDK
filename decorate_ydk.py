@@ -30,16 +30,17 @@ def yugioh_card_in_string(string, cards_json, card_id_regex, card_name_regex):
     return None
 
 
+def regex_or(list_of_strings):
+    re_str = "(" + "|".join(list_of_strings) + ")"
+    return re.compile(re_str, re.IGNORECASE)
+
+
 def yugioh_card_id_regex(cards_json):
-    ids = [str(card["id"]) for card in cards_json]
-    re_str = "(" + "|".join(ids) + ")"
-    return re.compile(re_str)
+    return regex_or([str(card["id"]) for card in cards_json])
 
 
 def yugioh_card_name_regex(cards_json):
-    ids = [card["name"] for card in cards_json]
-    re_str = "(" + "|".join(ids) + ")"
-    return re.compile(re_str, re.IGNORECASE)
+    return regex_or([card["name"] for card in cards_json])
 
 
 def format_output_card_string(card, format_descriptor_str):
