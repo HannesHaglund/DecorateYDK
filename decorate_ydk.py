@@ -43,13 +43,19 @@ def yugioh_card_name_regex(cards_json):
     return regex_or([card["name"] for card in cards_json])
 
 
+def ignore_codec_errors(string):
+    no_newlines = string.replace("\n", "\\n").replace("\r", "\\r")
+    encoded = no_newlines.encode(sys.stdout.encoding, "replace")
+    return encoded.decode(sys.stdout.encoding)
+
+
 def format_output_card_string(card, format_descriptor_str):
     output = []
     for format_char in format_descriptor_str.lower():
         if format_char == "i":
             output.append(str(card.get("id", "")))
         elif format_char == "n":
-            output.append(str(card.get("name", "")))
+            output.append(str(ignore_codec_errors(card.get("name", ""))))
         elif format_char == "t":
             output.append(str(card.get("type", "")))
         elif format_char == "a":
@@ -70,7 +76,8 @@ def format_output_card_string(card, format_descriptor_str):
             else:
                 output.append("")
         elif format_char == "d":
-            output.append(str(card.get("desc", "")).replace("\n", " "))
+            output.append(ignore_codec_errors(str(card.get("desc", ""))))
+            # print(ignore_codec_errors(repr(output[-1])))
         else:
             raise ValueError("Unrecognized format descriptor character \"" +
                              format_char + "\"")
@@ -127,11 +134,6 @@ def input_lines_to_output_lines_dict(input_file_lines,
     return card_lines_to_output_string
 
 
-def ignore_codec_errors(string):
-    encoded = string.encode(sys.stdout.encoding, "replace")
-    return encoded.decode(sys.stdout.encoding)
-
-
 def input_lines_to_output_lines(input_file_lines,
                                 cards_json,
                                 format_descriptor_str):
@@ -142,10 +144,8 @@ def input_lines_to_output_lines(input_file_lines,
     #   printing line by line
     all_lines = ""
     for line in input_file_lines:
-        if line in d:
-            all_lines += ignore_codec_errors(d[line]) + "\n"
-        else:
-            all_lines += ignore_codec_errors(line) + "\n"
+        # Get converted lines if it exists, default to just line
+        all_lines += d.get(line, line) + "\n"
     return all_lines.rstrip()   # Strip final newline
 
 
