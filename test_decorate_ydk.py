@@ -1,7 +1,7 @@
 import decorate_ydk
 import unittest
-import unittest.mock
 import json
+
 
 def example_json():
     text = """
@@ -82,38 +82,6 @@ class DecorateYdkTests(unittest.TestCase):
                                                           example_json(),
                                                           "i")
         self.assertEqual(output, "12345")
-
-    def test_initialize_cards_json_file_path_input_not_None(self):
-        self.assertEqual("foo",
-                         decorate_ydk.initialize_cards_json_file_path("foo"))
-
-    def test_initialize_cards_json_file_path_input(self):
-
-        def mocked_requests_get(*args, **kwargs):
-            class MockResponse:
-                def __init__(self, json_data, status_code):
-                    self.json_data = json_data
-                    self.status_code = status_code
-
-                def json(self):
-                    return self.json_data
-
-                def raise_for_status(self):
-                    pass
-
-            if args[0] == "https://db.ygoprodeck.com/api/v7/cardinfo.php":
-                return MockResponse({"name": "Seto Kaiba"}, 200)
-            return MockResponse(None, 404)
-
-        with unittest.mock.patch('requests.get', side_effect=mocked_requests_get) as request_m, \
-             unittest.mock.patch('builtins.open', unittest.mock.mock_open()) as open_m, \
-             unittest.mock.patch('decorate_ydk.default_card_json_file_path', return_value="/foo/bar/baz"):
-
-            output = decorate_ydk.initialize_cards_json_file_path(None)
-            self.assertEqual(output, "/foo/bar/baz")
-            open_m.assert_called_once_with("/foo/bar/baz", "w")
-            request_m.assert_called_once_with("https://db.ygoprodeck.com/api/v7/cardinfo.php")
-            open_m.return_value.__enter__().write.assert_called_once_with("{\"name\": \"Seto Kaiba\"}")
 
 
 if __name__ == '__main__':
