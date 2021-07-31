@@ -5,16 +5,19 @@ import sys
 
 
 def file_lines(file_path):
+    """Return list of all lines in file at file_path."""
     with open(file_path) as f:
         return [line.rstrip() for line in f.readlines()]
 
 
 def read_json(file_path):
+    """Read json file from file_path."""
     with open(file_path, encoding="utf-8", errors="surrogateescape") as f:
         return json.load(f)["data"]
 
 
 def yugioh_card_in_string(string, cards_json, card_id_regex, card_name_regex):
+    """Given a string, find a yugioh card and return that it."""
     id_match = re.search(card_id_regex, string)
     if id_match is not None:
         for card in cards_json:
@@ -31,25 +34,31 @@ def yugioh_card_in_string(string, cards_json, card_id_regex, card_name_regex):
 
 
 def regex_or(list_of_strings):
+    """Compile a regex matching any of the strings provided."""
     re_str = "(" + "|".join(list_of_strings) + ")"
     return re.compile(re_str, re.IGNORECASE)
 
 
 def yugioh_card_id_regex(cards_json):
+    """Compile a regex matching a yugioh card name."""
     return regex_or([str(card["id"]) for card in cards_json])
 
 
 def yugioh_card_name_regex(cards_json):
+    """Compile a regex matching a yugioh card id."""
     return regex_or([card["name"] for card in cards_json])
 
 
 def ignore_codec_errors(string):
+    """Recode string, ignoring \r, \n, and unknown characters."""
     no_newlines = string.replace("\n", "\\n").replace("\r", "\\r")
     encoded = no_newlines.encode(sys.stdout.encoding, "replace")
     return encoded.decode(sys.stdout.encoding)
 
 
 def format_output_card_string(card, format_descriptor_str):
+    """Format a card according to format_descriptor_str,
+and return the resulting string."""
     output = []
     for format_char in format_descriptor_str.lower():
         if format_char == "i":
@@ -87,6 +96,7 @@ def format_output_card_string(card, format_descriptor_str):
 def input_lines_to_output_lines_dict(input_file_lines,
                                      cards_json,
                                      format_descriptor_str):
+    """Generate dict mapping input lines to output lines."""
     # Generate regexes
     card_id_regex = yugioh_card_id_regex(cards_json)
     card_name_regex = yugioh_card_name_regex(cards_json)
@@ -97,7 +107,10 @@ def input_lines_to_output_lines_dict(input_file_lines,
         # Comments and empty lines should be ignored
         if line.startswith("#") or line.startswith("!") or line.strip() == "":
             continue
-        card = yugioh_card_in_string(line, cards_json, card_id_regex, card_name_regex)
+        card = yugioh_card_in_string(line,
+                                     cards_json,
+                                     card_id_regex,
+                                     card_name_regex)
         if card is not None:
             output = format_output_card_string(card, format_descriptor_str)
             card_lines_to_output_list[line] = output
@@ -129,7 +142,8 @@ def input_lines_to_output_lines_dict(input_file_lines,
 
     # Strip away the final spaces on each each line, coming from the ljust
     for k in card_lines_to_output_string:
-        card_lines_to_output_string[k] = card_lines_to_output_string[k].rstrip()
+        card_lines_to_output_string[k] = \
+            card_lines_to_output_string[k].rstrip()
 
     return card_lines_to_output_string
 
@@ -137,6 +151,7 @@ def input_lines_to_output_lines_dict(input_file_lines,
 def input_lines_to_output_lines(input_file_lines,
                                 cards_json,
                                 format_descriptor_str):
+    """Convert input lines to output string."""
     d = input_lines_to_output_lines_dict(input_file_lines,
                                          cards_json,
                                          format_descriptor_str)
@@ -150,6 +165,7 @@ def input_lines_to_output_lines(input_file_lines,
 
 
 def main(input_file, cards_json_file, format_descriptor_str):
+    """Entry point."""
     cards_json = read_json(cards_json_file)
     if input_file is None:
         # Read all possible ids
