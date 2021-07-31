@@ -137,3 +137,9 @@ Tests can be run through:
 ```
 python3 -m unittest discover .
 ```
+
+## License
+
+The Yu-Gi-Oh! Trading Card Game is published and owned by Konami Holdings Corporation at the time of writing.
+
+This repository is released under MIT License. See LICENSE.txt for more information.
