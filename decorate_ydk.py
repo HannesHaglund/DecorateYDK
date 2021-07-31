@@ -185,5 +185,4 @@ The following descriptors may be entered:
 Each line in the file that shall be processed must contain exactly one Yugioh card ID as a substring.
 When ommitted, output all possible cards instead.""")
     args = parser.parse_args()
-    print(args)
     main(args.input_file, args.cards_json_file, args.format_descriptor_string)
